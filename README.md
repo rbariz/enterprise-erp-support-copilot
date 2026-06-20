@@ -21,6 +21,26 @@ Enterprise ERP Support Copilot provides:
 
 ---
 
+## Screenshots
+
+### Dashboard
+
+![Dashboard](docs/images/dashboard.png)
+
+### AI Ticket Analysis
+
+![Analysis](docs/images/ticket-analysis.png)
+
+### Knowledge Context & Similar Incidents
+
+![Knowledge](docs/images/knowledge-context.png)
+
+### Ticket Timeline
+
+![Timeline](docs/images/timeline.png)
+----
+
+
 ## Key Features
 
 ### Ticket Management
