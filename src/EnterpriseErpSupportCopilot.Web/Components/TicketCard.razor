@@ -1,0 +1,24 @@
+﻿@using EnterpriseErpSupportCopilot.Contracts.Tickets
+
+<a class="ticket-card" href="/tickets/@Ticket.Id">
+    <div class="ticket-card-header">
+        <div>
+            <div class="ticket-reference">@Ticket.Reference</div>
+            <div class="ticket-title">@Ticket.Title</div>
+        </div>
+
+        <SeverityBadge Severity="@Ticket.Severity" />
+    </div>
+
+    <p class="ticket-description">@Ticket.Description</p>
+
+    <div class="ticket-card-footer">
+        <StatusBadge Status="@Ticket.Status" />
+        <span>@Ticket.Category</span>
+        <span>@Ticket.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span>
+    </div>
+</a>
+
+@code {
+    [Parameter] public TicketDto Ticket { get; set; } = default!;
+}

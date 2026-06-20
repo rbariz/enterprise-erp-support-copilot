@@ -1,0 +1,7 @@
+﻿<span class="badge-pill severity-@Severity.ToLowerInvariant()">
+    @Severity
+</span>
+
+@code {
+    [Parameter] public string Severity { get; set; } = "";
+}

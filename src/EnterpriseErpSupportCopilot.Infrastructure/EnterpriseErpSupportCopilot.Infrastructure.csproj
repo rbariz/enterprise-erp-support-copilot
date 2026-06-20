@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\EnterpriseErpSupportCopilot.Application\EnterpriseErpSupportCopilot.Application.csproj" />
+    <ProjectReference Include="..\EnterpriseErpSupportCopilot.Domain\EnterpriseErpSupportCopilot.Domain.csproj" />
+  </ItemGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="EFCore.NamingConventions" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Http" Version="10.0.7" />
+		<PackageReference Include="OpenAI" Version="2.10.0" />
+		<PackageReference Include="Pgvector.EntityFrameworkCore" Version="0.3.0" />
+		<PackageReference Include="System.Net.Http.Json" Version="10.0.7" />
+	</ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>

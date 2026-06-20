@@ -1,0 +1,44 @@
+﻿@page "/analytics"
+@rendermode InteractiveServer
+@using EnterpriseErpSupportCopilot.Contracts.Dashboard
+@inject EnterpriseErpSupportCopilot.Web.Services.ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Analytics</h1>
+        <p>ERP support ticket distribution and operational indicators.</p>
+    </div>
+</div>
+
+@if (_analytics is null)
+{
+    <div class="loading-card">Loading analytics...</div>
+}
+else
+{
+    <div class="dashboard-grid">
+        <AnalyticsPanel Title="Tickets by Severity" Items="@_analytics.TicketsBySeverity" />
+        <AnalyticsPanel Title="Tickets by Status" Items="@_analytics.TicketsByStatus" />
+    </div>
+
+    <div class="panel-card mt-4">
+        <div class="panel-title">Tickets by Category</div>
+
+        @foreach (var item in _analytics.TicketsByCategory)
+        {
+            <div class="analytics-row">
+                <span>@item.Label</span>
+                <strong>@item.Count</strong>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private AnalyticsDto? _analytics;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _analytics = await Api.GetAnalyticsAsync();
+    }
+}

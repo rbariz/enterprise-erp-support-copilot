@@ -1,0 +1,116 @@
+﻿@page "/dashboard"
+@rendermode InteractiveServer
+@using EnterpriseErpSupportCopilot.Contracts.Dashboard
+@inject EnterpriseErpSupportCopilot.Web.Services.ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Dashboard</h1>
+        <p>AI-assisted support intelligence for Oracle EBS-like incidents.</p>
+    </div>
+</div>
+
+@if (_overview is null)
+{
+    <div class="loading-card">Loading dashboard...</div>
+}
+else
+{
+    var summary = _overview.Summary;
+
+    <div class="kpi-grid">
+        <KpiCard Title="Open Tickets" Value="@summary.OpenTickets.ToString()" Hint="Active support queue" />
+        <KpiCard Title="Critical Tickets" Value="@summary.CriticalTickets.ToString()" Hint="Requires immediate attention" />
+        <KpiCard Title="AI Analyses" Value="@summary.AnalysesGenerated.ToString()" Hint="Generated support insights" />
+        <KpiCard Title="Resolved Incidents" Value="@summary.ResolvedIncidents.ToString()" Hint="Reusable support knowledge" />
+        <KpiCard Title="Knowledge Articles" Value="@summary.KnowledgeArticles.ToString()" Hint="ERP support knowledge base" />
+        <KpiCard Title="Total Tickets" Value="@summary.TotalTickets.ToString()" Hint="All seeded and created tickets" />
+    </div>
+
+    @if (_aiProvider is not null)
+    {
+        <section class="panel-card mt-4">
+            <div class="panel-title">AI Provider</div>
+
+            <div class="ai-provider-row">
+                <div>
+                    <strong>@_aiProvider.Provider</strong>
+                    <div class="text-muted">@_aiProvider.Model</div>
+                </div>
+
+                <span class="badge-pill status-@(_aiProvider.IsConfigured ? "resolved" : "open")">
+                    @(_aiProvider.IsConfigured ? "Configured" : "Fallback")
+                </span>
+            </div>
+        </section>
+    }
+
+    <div class="dashboard-grid mt-4">
+        <section class="panel-card">
+            <div class="panel-title">Recent Tickets</div>
+
+            @foreach (var ticket in _overview.RecentTickets)
+            {
+                <a class="dashboard-list-item" href="/tickets/@ticket.Id">
+                    <div>
+                        <strong>@ticket.Reference</strong>
+                        <div>@ticket.Title</div>
+                    </div>
+
+                    <SeverityBadge Severity="@ticket.Severity" />
+                </a>
+            }
+        </section>
+
+        <section class="panel-card">
+            <div class="panel-title">Recent AI Analyses</div>
+
+            @foreach (var analysis in _overview.RecentAnalyses)
+            {
+                <a class="dashboard-list-item" href="/tickets/@analysis.TicketId">
+                    <div>
+                        <strong>@analysis.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong>
+                        <div>@analysis.Summary</div>
+                    </div>
+
+                    <span class="confidence-mini">@analysis.ConfidenceScore%</span>
+                </a>
+            }
+        </section>
+
+        <section class="panel-card mt-4">
+
+            <div class="panel-title">
+                Recent Activity
+            </div>
+
+            @foreach (var activity in _overview.RecentActivities)
+            {
+                <div class="activity-row">
+
+                    <div class="activity-time">
+                        @activity.Timestamp.ToLocalTime().ToString("HH:mm")
+                    </div>
+
+                    <div class="activity-content">
+                        @activity.Description
+                    </div>
+
+                </div>
+            }
+
+        </section>
+    </div>
+}
+
+@code {
+    private DashboardOverviewDto? _overview;
+
+    private AiProviderStatusDto? _aiProvider;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _overview = await Api.GetDashboardOverviewAsync();
+        _aiProvider = await Api.GetAiProviderStatusAsync();
+    }
+}

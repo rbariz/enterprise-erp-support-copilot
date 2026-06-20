@@ -1,0 +1,40 @@
+﻿@using EnterpriseErpSupportCopilot.Contracts.Knowledge
+
+<div class="knowledge-card">
+
+    <div class="knowledge-header">
+
+        <h4>@Article.Title</h4>
+
+    </div>
+
+    <p class="knowledge-content">
+        @ShortContent
+    </p>
+
+    <div class="knowledge-tags">
+
+        @foreach (var tag in Tags)
+        {
+            <span class="tag-pill">@tag</span>
+        }
+
+    </div>
+
+</div>
+
+@code {
+
+    [Parameter]
+    public KnowledgeArticleDto Article { get; set; } = default!;
+
+    private string ShortContent =>
+        Article.Content.Length > 180
+            ? Article.Content[..180] + "..."
+            : Article.Content;
+
+    private IEnumerable<string> Tags =>
+        (Article.Tags ?? "")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(x => x.Trim());
+}

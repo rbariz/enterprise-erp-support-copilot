@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>509f2edd-cd7a-405a-9036-774e271a2d15</UserSecretsId>
+  </PropertyGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.11" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.15">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+	</ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EnterpriseErpSupportCopilot.Application\EnterpriseErpSupportCopilot.Application.csproj" />
+    <ProjectReference Include="..\EnterpriseErpSupportCopilot.Infrastructure\EnterpriseErpSupportCopilot.Infrastructure.csproj" />
+    <ProjectReference Include="..\EnterpriseErpSupportCopilot.Contracts\EnterpriseErpSupportCopilot.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

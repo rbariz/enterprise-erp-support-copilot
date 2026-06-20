@@ -1,0 +1,100 @@
+﻿@page "/tickets"
+@rendermode InteractiveServer
+@using EnterpriseErpSupportCopilot.Contracts.Tickets
+@inject EnterpriseErpSupportCopilot.Web.Services.ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Support Tickets</h1>
+        <p>Oracle / ERP support queue with AI-assisted investigation.</p>
+    </div>
+
+    <a class="btn btn-primary" href="/tickets/create">Create Ticket</a>
+</div>
+
+<div class="filters-card">
+    <input class="form-control"
+           placeholder="Search tickets..."
+           @bind="_searchTerm"
+           @bind:event="oninput" />
+
+    <select class="form-select" @bind="_statusFilter">
+        <option value="">All statuses</option>
+        <option>Open</option>
+        <option>InProgress</option>
+        <option>Resolved</option>
+        <option>Closed</option>
+    </select>
+
+    <select class="form-select" @bind="_severityFilter">
+        <option value="">All severities</option>
+        <option>Low</option>
+        <option>Medium</option>
+        <option>High</option>
+        <option>Critical</option>
+    </select>
+
+    <select class="form-select" @bind="_categoryFilter">
+        <option value="">All categories</option>
+        <option>ConcurrentProgram</option>
+        <option>Workflow</option>
+        <option>Interface</option>
+        <option>OracleForms</option>
+        <option>OafPage</option>
+        <option>Payables</option>
+        <option>Purchasing</option>
+        <option>GeneralLedger</option>
+        <option>Inventory</option>
+        <option>Integration</option>
+    </select>
+</div>
+
+@if (_tickets is null)
+{
+    <div class="loading-card">Loading tickets...</div>
+}
+else
+{
+    <div class="ticket-count">
+        @FilteredTickets.Count() ticket(s) found
+    </div>
+
+    <div class="tickets-grid">
+        @foreach (var ticket in FilteredTickets)
+        {
+            <TicketCard Ticket="@ticket" />
+        }
+    </div>
+}
+
+@code {
+    private List<TicketDto>? _tickets;
+
+    private string _searchTerm = "";
+    private string _statusFilter = "";
+    private string _severityFilter = "";
+    private string _categoryFilter = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _tickets = await Api.GetTicketsAsync();
+    }
+
+    private IEnumerable<TicketDto> FilteredTickets =>
+        (_tickets ?? [])
+            .Where(x =>
+                string.IsNullOrWhiteSpace(_searchTerm)
+                || x.Reference.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+                || x.Title.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+                || x.Description.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+                || x.Category.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase))
+            .Where(x =>
+                string.IsNullOrWhiteSpace(_statusFilter)
+                || x.Status == _statusFilter)
+            .Where(x =>
+                string.IsNullOrWhiteSpace(_severityFilter)
+                || x.Severity == _severityFilter)
+            .Where(x =>
+                string.IsNullOrWhiteSpace(_categoryFilter)
+                || x.Category == _categoryFilter);
+}

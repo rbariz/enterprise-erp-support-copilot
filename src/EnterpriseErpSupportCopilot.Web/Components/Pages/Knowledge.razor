@@ -1,0 +1,49 @@
+﻿@page "/knowledge"
+@rendermode InteractiveServer
+@using EnterpriseErpSupportCopilot.Contracts.Knowledge
+@using EnterpriseErpSupportCopilot.Web.Services
+
+@inject ApiClient Api
+
+<div class="page-header">
+
+    <div>
+        <h1>Knowledge Base</h1>
+        <p>ERP support knowledge articles used by AI analysis.</p>
+    </div>
+
+</div>
+
+<input class="form-control mb-4"
+       placeholder="Search articles..."
+       @bind="_searchTerm"
+       @bind:event="oninput" />
+
+<div class="knowledge-grid">
+
+    @foreach (var article in FilteredArticles)
+    {
+        <KnowledgeCard Article="@article" />
+    }
+
+</div>
+
+@code {
+
+    private List<KnowledgeArticleDto> _articles = [];
+
+    private string _searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _articles = await Api.GetKnowledgeAsync();
+    }
+
+    private IEnumerable<KnowledgeArticleDto> FilteredArticles =>
+    string.IsNullOrWhiteSpace(_searchTerm)
+        ? _articles
+        : _articles.Where(x =>
+            x.Title.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+            || x.Content.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+            || x.Tags.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+}

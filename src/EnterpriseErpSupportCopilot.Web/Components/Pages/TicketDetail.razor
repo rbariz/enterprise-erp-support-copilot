@@ -1,0 +1,433 @@
+﻿@page "/tickets/{Id:guid}"
+@rendermode InteractiveServer
+@using EnterpriseErpSupportCopilot.Contracts.Analysis
+@using EnterpriseErpSupportCopilot.Contracts.Incidents
+@using EnterpriseErpSupportCopilot.Contracts.Knowledge
+@using EnterpriseErpSupportCopilot.Contracts.Tickets
+@inject EnterpriseErpSupportCopilot.Web.Services.ApiClient Api
+
+@if (_ticket is null)
+{
+    <div class="loading-card">Loading ticket...</div>
+}
+else
+{
+    <div class="page-header">
+        <div>
+            <h1>@_ticket.Reference</h1>
+            <p>@_ticket.Title</p>
+        </div>
+
+        
+    </div>
+
+    <div class="ticket-workspace">
+
+        <aside class="workspace-panel">
+            <h3>Ticket</h3>
+
+            <div class="meta-row">
+                <div class="meta-label">Status</div>
+                <StatusBadge Status="@_ticket.Status" />
+            </div>
+
+            <div class="meta-row">
+                <div class="meta-label">Severity</div>
+                <SeverityBadge Severity="@_ticket.Severity" />
+            </div>
+
+            <div class="meta-row">
+                <div class="meta-label">Category</div>
+                <div class="meta-value">@_ticket.Category</div>
+            </div>
+
+            <div class="meta-row">
+                <div class="meta-label">Created</div>
+                <div class="meta-value">@_ticket.CreatedAt.ToLocalTime()</div>
+            </div>
+
+            <div class="meta-row">
+                <div class="meta-label">Description</div>
+                <p>@_ticket.Description</p>
+            </div>
+
+            <hr />
+
+            <label class="form-label">Workflow Status</label>
+            <select class="form-select mb-2" @bind="_selectedStatus">
+                <option>Open</option>
+                <option>InProgress</option>
+                <option>Resolved</option>
+                <option>Closed</option>
+            </select>
+
+            <button class="btn btn-outline-secondary w-100" @onclick="UpdateStatusAsync">
+                Update Status
+            </button>
+
+
+            <hr />
+
+            <h3>Timeline</h3>
+
+            @if (_timeline.Count == 0)
+            {
+                <p class="text-muted">No timeline events.</p>
+            }
+            else
+            {
+                <div class="timeline">
+                    @foreach (var item in _timeline)
+                    {
+                        <div class="timeline-item">
+                            <div class="timeline-dot"></div>
+
+                            <div>
+                                <div class="timeline-title">@item.Title</div>
+                                <div class="timeline-description">@item.Description</div>
+                                <div class="timeline-time">@item.Timestamp.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </aside>
+
+        <main class="analysis-main">
+            <section class="workspace-panel">
+                <div class="panel-header">
+                    <h3>AI Analysis</h3>
+
+                    <button class="btn btn-primary btn-sm" @onclick="AnalyzeAsync" disabled="@_isAnalyzing">
+                        @(_isAnalyzing ? "Analyzing..." : "Analyze with AI")
+                    </button>
+                </div>
+
+                @if (_analysis is null)
+                {
+                    <p class="text-muted">
+                        No analysis yet. Click "Analyze with AI" to generate support insights.
+                    </p>
+                }
+                else
+                {
+                    <div class="analysis-block">
+                        <div class="analysis-block-title">Summary</div>
+                        <p>@_analysis.Summary</p>
+                    </div>
+
+                    <div class="analysis-block">
+                        <div class="analysis-block-title">Probable Root Cause</div>
+                        <p>@_analysis.ProbableRootCause</p>
+                    </div>
+
+                    <div class="analysis-block">
+                        <div class="analysis-block-title">Recommended Actions</div>
+                        <p>@_analysis.RecommendedActions</p>
+                    </div>
+
+                    <div class="analysis-block">
+                        <div class="analysis-block-title">Risk Assessment</div>
+                        <p>@_analysis.RiskAssessment</p>
+                    </div>
+
+                    <div class="analysis-block">
+                        <div class="analysis-block-title">Confidence</div>
+
+                        <div class="confidence-row">
+                            <div class="confidence-track">
+                                <div class="confidence-fill" style="width:@_analysis.ConfidenceScore%"></div>
+                            </div>
+
+                            <strong>@_analysis.ConfidenceScore%</strong>
+                        </div>
+
+
+                        @if (_analysisResult?.ContextMetrics is not null)
+                        {
+                            <div class="rag-metrics-card">
+
+                                <div class="panel-title">
+                                    RAG Context
+                                </div>
+
+                                <div class="metric-row">
+                                    <span>Knowledge Articles</span>
+                                    <strong>@_analysisResult.ContextMetrics.KnowledgeArticles</strong>
+                                </div>
+
+                                <div class="metric-row">
+                                    <span>Resolved Incidents</span>
+                                    <strong>@_analysisResult.ContextMetrics.ResolvedIncidents</strong>
+                                </div>
+
+                                <div class="metric-row">
+                                    <span>Matched Terms</span>
+                                    <strong>@_analysisResult.ContextMetrics.MatchedTerms</strong>
+                                </div>
+
+                                <div class="metric-row">
+                                    <span>Context Size</span>
+                                    <strong>@ContextSizeKb KB</strong>
+                                </div>
+
+                            </div>
+                        }
+
+                    </div>
+
+                    <button class="btn btn-success" @onclick="CreateResolvedIncidentAsync">
+                        Save as Resolved Incident
+                    </button>
+                }
+            </section>
+
+            @if (_analysisHistory.Count > 0)
+            {
+                <section class="workspace-panel">
+                    <h3>Analysis History</h3>
+
+                    @foreach (var item in _analysisHistory.Take(3))
+                    {
+                        <div class="side-card">
+                            <h5>@item.CreatedAt.ToLocalTime()</h5>
+                            <p>@item.Summary</p>
+                            <small>Confidence: @item.ConfidenceScore%</small>
+                        </div>
+                    }
+                </section>
+            }
+        </main>
+
+        <aside class="workspace-panel">
+            <h3>Knowledge Context</h3>
+
+            @if (_analysisResult?.KnowledgeArticles.Count > 0)
+            {
+                @foreach (var article in _analysisResult.KnowledgeArticles)
+                {
+                    <div class="side-card">
+                        <h5>@article.Title</h5>
+
+                        <div class="source-score">
+                            Similarity @article.SimilarityScore%
+                        </div>
+
+
+                        <div class="source-rank">
+                            Vector @article.SimilarityScore% · Keyword @((article.KeywordScore * 100).ToString("F0"))% · Final @((article.FinalScore * 100).ToString("F0"))%
+                        </div>
+
+                        @if (article.MatchedTerms.Count > 0)
+                        {
+                            <div class="matched-terms">
+
+                                @foreach (var term in article.MatchedTerms)
+                                {
+                                    <span class="matched-pill">
+                                        @term
+                                    </span>
+                                }
+
+                            </div>
+                        }
+
+                        <p>@article.Content</p>
+
+                        <small>@article.Tags</small>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted">No knowledge articles loaded yet.</p>
+            }
+
+            <hr />
+
+            <h3>Similar Incidents</h3>
+
+            @if (_analysisResult?.SimilarIncidents.Count > 0)
+            {
+                @foreach (var incident in _analysisResult.SimilarIncidents)
+                {
+                    <div class="side-card">
+                        <h5>@incident.ProblemSummary</h5>
+                        <p><strong>Root Cause:</strong> @incident.RootCause</p>
+                        <p><strong>Resolution:</strong> @incident.Resolution</p>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted">No similar incidents loaded yet.</p>
+            }
+
+            @if (_analysis is not null)
+            {
+                <hr />
+
+                <h3>Operator Feedback</h3>
+
+                <textarea class="form-control mb-2"
+                          rows="3"
+                          placeholder="Optional comment..."
+                          @bind="_feedbackComment"></textarea>
+
+                <button class="btn btn-outline-success me-2" @onclick="() => SubmitFeedbackAsync(true)">
+                    Useful
+                </button>
+
+                <button class="btn btn-outline-danger" @onclick="() => SubmitFeedbackAsync(false)">
+                    Not useful
+                </button>
+
+                @if (_feedbackSaved)
+                {
+                    <div class="text-success mt-2">Feedback saved.</div>
+                }
+            }
+        </aside>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+
+    private TicketDto? _ticket;
+    private AiTicketAnalysisDto? _analysis;
+    private TicketAnalysisResultDto? _analysisResult;
+    private List<AiTicketAnalysisDto> _analysisHistory = [];
+    private string _selectedStatus = "Open";
+    private bool _isAnalyzing;
+    private string? _feedbackComment;
+    private bool _feedbackSaved;
+
+    private List<TicketTimelineItemDto> _timeline = [];
+
+    private string ContextSizeKb =>
+    _analysisResult is null
+        ? "0.0"
+        : (_analysisResult.ContextMetrics.ContextSizeBytes / 1024.0)
+            .ToString("F1");
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ticket = await Api.GetTicketAsync(Id);
+        _analysis = await Api.GetLatestAnalysisAsync(Id);
+
+        var context = await Api.GetTicketAnalysisContextAsync(Id);
+
+        if (context is not null && _analysis is not null)
+        {
+            var metrics = BuildRagContextMetrics(
+     context.KnowledgeArticles,
+     context.SimilarIncidents);
+
+            _analysisResult = new TicketAnalysisResultDto(
+                _analysis,
+                context.KnowledgeArticles,
+                context.SimilarIncidents,
+                metrics);
+        }
+
+        _analysisHistory = await Api.GetAnalysisHistoryAsync(Id);
+        _timeline = await Api.GetTicketTimelineAsync(Id);
+
+        if (_ticket is not null)
+        {
+            _selectedStatus = _ticket.Status;
+        }
+    }
+
+    private async Task AnalyzeAsync()
+    {
+        _isAnalyzing = true;
+        _analysisResult = await Api.AnalyzeTicketAsync(Id);
+        _analysis = _analysisResult?.Analysis;
+
+        var context = await Api.GetTicketAnalysisContextAsync(Id);
+
+        if (context is not null && _analysis is not null)
+        {
+            var metrics = BuildRagContextMetrics(
+    context.KnowledgeArticles,
+    context.SimilarIncidents);
+
+            _analysisResult = new TicketAnalysisResultDto(
+                _analysis,
+                context.KnowledgeArticles,
+                context.SimilarIncidents,
+                metrics);
+        }
+
+        _analysisHistory = await Api.GetAnalysisHistoryAsync(Id);
+        _timeline = await Api.GetTicketTimelineAsync(Id);
+        _isAnalyzing = false;
+    }
+
+    private async Task UpdateStatusAsync()
+    {
+        var updated = await Api.UpdateTicketStatusAsync(Id, _selectedStatus);
+
+        if (updated is not null)
+        {
+            _ticket = updated;
+            _selectedStatus = updated.Status;
+        }
+    }
+
+    private async Task CreateResolvedIncidentAsync()
+    {
+        if (_ticket is null || _analysis is null)
+        {
+            return;
+        }
+
+        var request = new CreateResolvedIncidentRequest(
+            ProblemSummary: $"{_ticket.Reference} - {_ticket.Title}",
+            RootCause: _analysis.ProbableRootCause,
+            Resolution: _analysis.RecommendedActions,
+            Tags: $"{_ticket.Category},{_ticket.Severity},ai-generated");
+
+        await Api.CreateResolvedIncidentAsync(request);
+    }
+
+    private async Task SubmitFeedbackAsync(bool isUseful)
+    {
+        if (_analysis is null)
+        {
+            return;
+        }
+
+        var request = new CreateAnalysisFeedbackRequest(
+            _analysis.Id,
+            isUseful,
+            _feedbackComment);
+
+        await Api.SubmitAnalysisFeedbackAsync(request);
+        _feedbackSaved = true;
+    }
+
+    private static RagContextMetricsDto BuildRagContextMetrics(
+    IReadOnlyList<KnowledgeSourceDto> knowledgeArticles,
+    IReadOnlyList<ResolvedIncidentDto> similarIncidents)
+    {
+        var matchedTermsCount = knowledgeArticles
+            .SelectMany(x => x.MatchedTerms)
+            .Distinct()
+            .Count();
+
+        var contextSize = knowledgeArticles.Sum(x =>
+            x.Title.Length + x.Content.Length + x.Tags.Length);
+
+        contextSize += similarIncidents.Sum(x =>
+            x.ProblemSummary.Length + x.RootCause.Length + x.Resolution.Length);
+
+        return new RagContextMetricsDto(
+            knowledgeArticles.Count,
+            similarIncidents.Count,
+            matchedTermsCount,
+            contextSize);
+    }
+}

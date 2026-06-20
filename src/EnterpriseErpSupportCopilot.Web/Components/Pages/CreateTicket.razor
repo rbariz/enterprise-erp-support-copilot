@@ -1,0 +1,75 @@
+﻿@page "/tickets/create"
+@rendermode InteractiveServer
+@using EnterpriseErpSupportCopilot.Contracts.Tickets
+@inject EnterpriseErpSupportCopilot.Web.Services.ApiClient Api
+@inject NavigationManager Nav
+
+<h1>Create ERP Support Ticket</h1>
+
+<div class="mb-3">
+    <label class="form-label">Title</label>
+    <input class="form-control" @bind="_title" />
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Description</label>
+    <textarea class="form-control" rows="5" @bind="_description"></textarea>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Category</label>
+    <select class="form-select" @bind="_category">
+        <option>ConcurrentProgram</option>
+        <option>Workflow</option>
+        <option>Interface</option>
+        <option>OracleForms</option>
+        <option>OafPage</option>
+        <option>Payables</option>
+        <option>Purchasing</option>
+        <option>GeneralLedger</option>
+        <option>Inventory</option>
+        <option>Integration</option>
+    </select>
+</div>
+
+<div class="mb-3">
+    <label class="form-label">Severity</label>
+    <select class="form-select" @bind="_severity">
+        <option>Low</option>
+        <option>Medium</option>
+        <option>High</option>
+        <option>Critical</option>
+    </select>
+</div>
+
+<button class="btn btn-primary" @onclick="CreateAsync" disabled="@_isSaving">
+    @(_isSaving ? "Creating..." : "Create Ticket")
+</button>
+
+@code {
+    private string _title = "Workflow Notification Not Sent";
+    private string _description = "Approval notifications are not delivered to users although workflow items are active.";
+    private string _category = "Workflow";
+    private string _severity = "High";
+    private bool _isSaving;
+
+    private async Task CreateAsync()
+    {
+        _isSaving = true;
+
+        var request = new CreateTicketRequest(
+            _title,
+            _description,
+            _category,
+            _severity);
+
+        var created = await Api.CreateTicketAsync(request);
+
+        _isSaving = false;
+
+        if (created is not null)
+        {
+            Nav.NavigateTo($"/tickets/{created.Id}");
+        }
+    }
+}

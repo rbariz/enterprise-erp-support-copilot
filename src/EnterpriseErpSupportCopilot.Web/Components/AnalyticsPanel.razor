@@ -1,0 +1,30 @@
+﻿@using EnterpriseErpSupportCopilot.Contracts.Dashboard
+
+<section class="panel-card">
+
+    <div class="panel-title">
+        @Title
+    </div>
+
+    @foreach (var item in Items)
+    {
+        <HorizontalBar Label="@item.Label"
+                       Value="@item.Count"
+                       MaxValue="@MaxValue" />
+    }
+
+</section>
+
+@code {
+
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    [Parameter]
+    public IReadOnlyList<GroupCountDto> Items { get; set; } = [];
+
+    private int MaxValue =>
+        Items.Count == 0
+            ? 0
+            : Items.Max(x => x.Count);
+}

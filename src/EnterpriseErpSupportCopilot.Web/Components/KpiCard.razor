@@ -1,0 +1,11 @@
+﻿<div class="kpi-card">
+    <div class="kpi-label">@Title</div>
+    <div class="kpi-value">@Value</div>
+    <div class="kpi-hint">@Hint</div>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public string Value { get; set; } = "";
+    [Parameter] public string Hint { get; set; } = "";
+}

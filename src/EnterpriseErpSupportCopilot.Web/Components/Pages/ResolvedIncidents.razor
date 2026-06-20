@@ -1,0 +1,49 @@
+﻿@page "/resolved-incidents"
+@rendermode InteractiveServer
+@using EnterpriseErpSupportCopilot.Contracts.Incidents
+@inject EnterpriseErpSupportCopilot.Web.Services.ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Resolved Incidents</h1>
+        <p>Historical ERP support incidents reused by the AI analysis engine.</p>
+    </div>
+</div>
+
+<input class="form-control mb-4"
+       placeholder="Search incidents..."
+       @bind="_searchTerm"
+       @bind:event="oninput" />
+
+@if (_incidents is null)
+{
+    <div class="loading-card">Loading incidents...</div>
+}
+else
+{
+    <div class="incidents-grid">
+        @foreach (var incident in FilteredIncidents)
+        {
+            <ResolvedIncidentCard Incident="@incident" />
+        }
+    </div>
+}
+
+@code {
+    private List<ResolvedIncidentDto>? _incidents;
+    private string _searchTerm = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _incidents = await Api.GetResolvedIncidentsAsync();
+    }
+
+    private IEnumerable<ResolvedIncidentDto> FilteredIncidents =>
+        string.IsNullOrWhiteSpace(_searchTerm)
+            ? _incidents ?? []
+            : (_incidents ?? []).Where(x =>
+                x.ProblemSummary.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+                || x.RootCause.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+                || x.Resolution.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+                || x.Tags.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+}

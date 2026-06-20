@@ -1,0 +1,31 @@
+﻿@using EnterpriseErpSupportCopilot.Contracts.Incidents
+
+<div class="incident-card">
+    <div class="incident-title">@Incident.ProblemSummary</div>
+
+    <div class="incident-section">
+        <div class="incident-label">Root Cause</div>
+        <p>@Incident.RootCause</p>
+    </div>
+
+    <div class="incident-section">
+        <div class="incident-label">Resolution</div>
+        <p>@Incident.Resolution</p>
+    </div>
+
+    <div class="knowledge-tags">
+        @foreach (var tag in Tags)
+        {
+            <span class="tag-pill">@tag</span>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public ResolvedIncidentDto Incident { get; set; } = default!;
+
+    private IEnumerable<string> Tags =>
+        (Incident.Tags ?? "")
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(x => x.Trim());
+}
