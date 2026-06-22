@@ -142,8 +142,23 @@ public sealed class ApiClient
             $"/api/tickets/{id}/timeline") ?? [];
     }
 
+    public async Task<PromptPreviewDto?> GetPromptPreviewAsync(Guid id)
+    {
+        return await _http.GetFromJsonAsync<PromptPreviewDto>(
+            $"/api/tickets/{id}/prompt-preview");
+    }
+
+    public async Task<List<AnalysisFeedbackDto>> GetAnalysisFeedbackAsync()
+    {
+        return await _http.GetFromJsonAsync<List<AnalysisFeedbackDto>>(
+            "/api/analysis/feedback") ?? [];
+    }
+
+
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
     };
+
+    
 }

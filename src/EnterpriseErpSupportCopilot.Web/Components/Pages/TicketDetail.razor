@@ -101,6 +101,10 @@ else
                     <button class="btn btn-primary btn-sm" @onclick="AnalyzeAsync" disabled="@_isAnalyzing">
                         @(_isAnalyzing ? "Analyzing..." : "Analyze with AI")
                     </button>
+
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="TogglePromptPreviewAsync">
+                        Prompt Preview
+                    </button>
                 </div>
 
                 @if (_analysis is null)
@@ -151,6 +155,8 @@ else
                                     RAG Context
                                 </div>
 
+                               
+
                                 <div class="metric-row">
                                     <span>Knowledge Articles</span>
                                     <strong>@_analysisResult.ContextMetrics.KnowledgeArticles</strong>
@@ -172,6 +178,48 @@ else
                                 </div>
 
                             </div>
+
+                            @if (_showPromptPreview && _promptPreview is not null)
+                            {
+                                <div class="prompt-preview-card">
+                                    <div class="panel-title">Prompt Preview</div>
+
+                                    <div class="metric-row">
+                                        <span>Knowledge Articles</span>
+                                        <strong>@_promptPreview.KnowledgeArticles</strong>
+                                    </div>
+
+                                    <div class="metric-row">
+                                        <span>Similar Incidents</span>
+                                        <strong>@_promptPreview.SimilarIncidents</strong>
+                                    </div>
+
+                                    <div class="metric-row">
+                                        <span>Context Size</span>
+                                        <strong>@PromptSizeKb KB</strong>
+                                    </div>
+
+                                    <div class="prompt-sections">
+
+                                        <details class="prompt-section">
+                                            <summary>
+                                                System Prompt
+                                            </summary>
+
+                                            <pre>@_promptPreview.SystemPrompt</pre>
+                                        </details>
+
+                                        <details class="prompt-section">
+                                            <summary>
+                                                User Prompt
+                                            </summary>
+
+                                            <pre>@_promptPreview.UserPrompt</pre>
+                                        </details>
+
+                                    </div>
+                                </div>
+                            }
                         }
 
                     </div>
@@ -214,8 +262,29 @@ else
                         </div>
 
 
-                        <div class="source-rank">
+                        @* <div class="source-rank">
                             Vector @article.SimilarityScore% · Keyword @((article.KeywordScore * 100).ToString("F0"))% · Final @((article.FinalScore * 100).ToString("F0"))%
+                        </div>
+ *@
+                        <div class="source-score">
+                            Final Score @((article.FinalScore * 100).ToString("F0"))%
+                        </div>
+
+                        <div class="source-rank-grid">
+                            <div>
+                                <span>Vector</span>
+                                <strong>@article.SimilarityScore%</strong>
+                            </div>
+
+                            <div>
+                                <span>Keyword</span>
+                                <strong>@((article.KeywordScore * 100).ToString("F0"))%</strong>
+                            </div>
+
+                            <div>
+                                <span>Distance</span>
+                                <strong>@article.Distance.ToString("F3")</strong>
+                            </div>
                         </div>
 
                         @if (article.MatchedTerms.Count > 0)
@@ -303,7 +372,16 @@ else
     private string? _feedbackComment;
     private bool _feedbackSaved;
 
+    private PromptPreviewDto? _promptPreview;
+    private bool _showPromptPreview;
+
     private List<TicketTimelineItemDto> _timeline = [];
+
+    private string PromptSizeKb =>
+    _promptPreview is null
+        ? "0.0"
+        : (_promptPreview.EstimatedContextSize / 1024.0)
+            .ToString("F1");
 
     private string ContextSizeKb =>
     _analysisResult is null
@@ -430,4 +508,15 @@ else
             matchedTermsCount,
             contextSize);
     }
+
+    private async Task TogglePromptPreviewAsync()
+    {
+        _showPromptPreview = !_showPromptPreview;
+
+        if (_showPromptPreview && _promptPreview is null)
+        {
+            _promptPreview = await Api.GetPromptPreviewAsync(Id);
+        }
+    }
+
 }

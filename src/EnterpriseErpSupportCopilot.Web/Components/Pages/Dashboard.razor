@@ -25,6 +25,13 @@ else
         <KpiCard Title="Resolved Incidents" Value="@summary.ResolvedIncidents.ToString()" Hint="Reusable support knowledge" />
         <KpiCard Title="Knowledge Articles" Value="@summary.KnowledgeArticles.ToString()" Hint="ERP support knowledge base" />
         <KpiCard Title="Total Tickets" Value="@summary.TotalTickets.ToString()" Hint="All seeded and created tickets" />
+        <KpiCard Title="Useful Feedback"
+                 Value="@summary.UsefulFeedback.ToString()"
+                 Hint="Validated AI analyses" />
+
+        <KpiCard Title="Not Useful"
+                 Value="@summary.NotUsefulFeedback.ToString()"
+                 Hint="Needs review" />
     </div>
 
     @if (_aiProvider is not null)
@@ -38,9 +45,17 @@ else
                     <div class="text-muted">@_aiProvider.Model</div>
                 </div>
 
-                <span class="badge-pill status-@(_aiProvider.IsConfigured ? "resolved" : "open")">
-                    @(_aiProvider.IsConfigured ? "Configured" : "Fallback")
-                </span>
+                <div class="provider-badges">
+
+                    <span class="badge-pill badge-rag">
+                        Hybrid RAG
+                    </span>
+
+                    <span class="badge-pill status-@(_aiProvider.IsConfigured ? "resolved" : "open")">
+                        @(_aiProvider.IsConfigured ? "Configured" : "Fallback")
+                    </span>
+
+                </div>
             </div>
         </section>
     }

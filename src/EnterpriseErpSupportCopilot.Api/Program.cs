@@ -123,7 +123,9 @@ app.MapGet("/api/dashboard/summary", async (
         CriticalTickets: await db.Tickets.CountAsync(x => x.Severity == EnterpriseErpSupportCopilot.Domain.Tickets.TicketSeverity.Critical, cancellationToken),
         KnowledgeArticles: await db.KnowledgeArticles.CountAsync(cancellationToken),
         ResolvedIncidents: await db.ResolvedIncidents.CountAsync(cancellationToken),
-        AnalysesGenerated: await db.Analyses.CountAsync(cancellationToken)
+        AnalysesGenerated: await db.Analyses.CountAsync(cancellationToken),
+        UsefulFeedback: await db.AnalysisFeedbacks.CountAsync(x => x.IsUseful, cancellationToken),
+        NotUsefulFeedback: await db.AnalysisFeedbacks.CountAsync(x => !x.IsUseful, cancellationToken)
     );
 
     return Results.Ok(summary);
@@ -315,7 +317,9 @@ app.MapGet("/api/dashboard/overview", async (
         CriticalTickets: await db.Tickets.CountAsync(x => x.Severity == TicketSeverity.Critical, cancellationToken),
         KnowledgeArticles: await db.KnowledgeArticles.CountAsync(cancellationToken),
         ResolvedIncidents: await db.ResolvedIncidents.CountAsync(cancellationToken),
-        AnalysesGenerated: await db.Analyses.CountAsync(cancellationToken)
+        AnalysesGenerated: await db.Analyses.CountAsync(cancellationToken),
+        UsefulFeedback: await db.AnalysisFeedbacks.CountAsync(x => x.IsUseful, cancellationToken),
+        NotUsefulFeedback: await db.AnalysisFeedbacks.CountAsync(x => !x.IsUseful, cancellationToken)
     );
     var activities = new List<ActivityItemDto>();
 
@@ -481,6 +485,51 @@ app.MapGet("/api/knowledge/search", async (
         x.Distance,
         SimilarityScore = (int)Math.Round((1 - x.Distance) * 100)
     }));
+});
+
+app.MapGet("/api/tickets/{id:guid}/prompt-preview", async (
+    Guid id,
+    SupportCopilotDbContext db,
+    IRagContextBuilder ragContextBuilder,
+    IPromptPreviewBuilder promptBuilder,
+    CancellationToken cancellationToken) =>
+{
+    var ticket = await db.Tickets.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+    if (ticket is null)
+    {
+        return Results.NotFound();
+    }
+
+    var context = await ragContextBuilder.BuildAsync(ticket, cancellationToken);
+
+    var knowledge = context.KnowledgeArticles
+        .Select(x => x.Article)
+        .ToList();
+
+    var preview = promptBuilder.Build(
+        ticket,
+        knowledge,
+        context.SimilarIncidents);
+
+    return Results.Ok(preview);
+});
+
+app.MapGet("/api/analysis/feedback", async (
+    SupportCopilotDbContext db,
+    CancellationToken cancellationToken) =>
+{
+    var feedback = await db.AnalysisFeedbacks
+        .OrderByDescending(x => x.CreatedAt)
+        .Select(x => new AnalysisFeedbackDto(
+            x.Id,
+            x.AnalysisId,
+            x.IsUseful,
+            x.Comment,
+            x.CreatedAt))
+        .ToListAsync(cancellationToken);
+
+    return Results.Ok(feedback);
 });
 
 app.MapGet("/api/health", () => Results.Ok(new

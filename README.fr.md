@@ -292,6 +292,7 @@ Exemples :
 * Prompt Preview
 * Feedback Learning Loop
 * Source Ranking
+* Dashboard Feedback Metrics
 
 ## Phase 3 — Enterprise
 

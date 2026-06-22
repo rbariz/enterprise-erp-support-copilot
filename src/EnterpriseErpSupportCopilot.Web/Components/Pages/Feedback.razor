@@ -1,0 +1,54 @@
+﻿@page "/feedback"
+@rendermode InteractiveServer
+@using EnterpriseErpSupportCopilot.Contracts.Analysis
+@inject EnterpriseErpSupportCopilot.Web.Services.ApiClient Api
+
+<div class="page-header">
+    <div>
+        <h1>Feedback Loop</h1>
+        <p>Operator feedback used to improve analysis quality and retrieval trust.</p>
+    </div>
+</div>
+
+@if (_feedback is null)
+{
+    <div class="loading-card">Loading feedback...</div>
+}
+else
+{
+    <div class="kpi-grid">
+        <KpiCard Title="Useful" Value="@UsefulCount.ToString()" Hint="Positive operator feedback" />
+        <KpiCard Title="Not Useful" Value="@NotUsefulCount.ToString()" Hint="Needs review" />
+        <KpiCard Title="Total Feedback" Value="@_feedback.Count.ToString()" Hint="Collected feedback entries" />
+    </div>
+
+    <div class="panel-card mt-4">
+        <div class="panel-title">Recent Feedback</div>
+
+        @foreach (var item in _feedback)
+        {
+            <div class="feedback-row">
+                <span class="badge-pill @(item.IsUseful ? "status-resolved" : "severity-critical")">
+                    @(item.IsUseful ? "Useful" : "Not useful")
+                </span>
+
+                <div>
+                    <strong>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</strong>
+                    <p>@(string.IsNullOrWhiteSpace(item.Comment) ? "No comment" : item.Comment)</p>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<AnalysisFeedbackDto>? _feedback;
+
+    private int UsefulCount => _feedback?.Count(x => x.IsUseful) ?? 0;
+    private int NotUsefulCount => _feedback?.Count(x => !x.IsUseful) ?? 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _feedback = await Api.GetAnalysisFeedbackAsync();
+    }
+}

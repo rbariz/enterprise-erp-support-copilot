@@ -12,6 +12,8 @@ namespace EnterpriseErpSupportCopilot.Contracts.Dashboard
     int CriticalTickets,
     int KnowledgeArticles,
     int ResolvedIncidents,
-    int AnalysesGenerated
+    int AnalysesGenerated,
+    int UsefulFeedback,
+    int NotUsefulFeedback
 );
 }

@@ -82,6 +82,7 @@ namespace EnterpriseErpSupportCopilot.Infrastructure
             services.AddScoped<IKnowledgeSearchService, KnowledgeSearchService>();
 
             services.AddScoped<IRagContextBuilder, RagContextBuilder>();
+            services.AddScoped<IPromptPreviewBuilder, PromptPreviewBuilder>();
 
             return services;
         }
